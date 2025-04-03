@@ -63,6 +63,10 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
     end
   end
 
+  def internal_exec_query(sql, name = "SQL", binds = [], prepare: false, async: false, allow_retry: false) # :nodoc:
+    exec_query(sql, name, binds, prepare: prepare)
+  end
+
   def begin_db_transaction
     log("begin transaction", nil) { @connection.transaction('READ COMMITTED') }
   end
