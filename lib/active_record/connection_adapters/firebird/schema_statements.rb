@@ -119,7 +119,7 @@ private
     @connection.columns(table_name)
   end
 
-  def new_column_from_field(table_name, field)
+  def new_column_from_field(table_name, field, columns)
     type_metadata = fetch_type_metadata(field["sql_type"])
     ActiveRecord::ConnectionAdapters::Column.new(field["name"], field["default"], type_metadata, field["nullable"], table_name)
   end

@@ -5,7 +5,7 @@ module ActiveRecord::ConnectionAdapters::Firebird::Quoting
 
   module ClassMethods
     def quote_column_name(name)
-      %Q("#{name}")
+      name
     end
   end
 
