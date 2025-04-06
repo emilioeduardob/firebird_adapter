@@ -117,4 +117,9 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
     @connection.query("SELECT NEXT VALUE FOR #{sequence_name} FROM RDB$DATABASE")[0][0]
   end
 
+  def insert(arel, name = nil, pk = nil, id_value = nil, sequence_name = nil, binds = [], returning: nil)
+    pk = nil if id_value
+    result = super
+    Array((result&.is_a?(Array) ? result.first : result) || id_value)
+  end
 end
