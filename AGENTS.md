@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is `firebird_adapter`, a Ruby gem that provides an ActiveRecord connection adapter for Firebird databases. It targets **Rails 7.x** (version 7.0.0 of the gem) and is built on top of the low-level `fb` gem.
+This is `firebird_adapter`, a Ruby gem that provides an ActiveRecord connection adapter for Firebird databases. It targets **Rails 8.x** (version 8.0.0 of the gem) and is built on top of the low-level `fb` gem.
 
 - **Repository**: https://github.com/FabioMR/firebird_adapter
 - **License**: MIT
@@ -14,14 +14,25 @@ The adapter allows Rails applications to use Firebird (2.5.x and compatible vers
 
 | Layer | Technology |
 |-------|------------|
-| Language | Ruby |
-| Framework | Rails / ActiveRecord 7.x |
+| Language | Ruby >= 3.2 |
+| Framework | Rails / ActiveRecord 8.x |
 | Database | Firebird 2.5.x (tested with 2.5.8 SuperServer) |
 | DB Driver | `fb` gem (Firebird Ruby bindings) |
 | Testing | RSpec 6.x |
 | Test DB cleanup | `database_cleaner` |
 | Dependency mgmt | Bundler 2.4.x |
 | Containerization | Docker Compose (optional, for local dev/test) |
+
+## Version Compatibility & Branching
+
+This project uses **release branches** to support multiple Rails versions, following the model used by `oracle-enhanced`:
+
+| Gem version | Rails version | Branch |
+|-------------|---------------|--------|
+| 8.x         | 8.x           | `release80` / `master` |
+| 7.x         | 7.x           | `release70` |
+
+Tags (e.g. `v8.0.0`, `v7.0.1`) are cut from the relevant release branch.
 
 ## Build and Test Commands
 
@@ -53,9 +64,9 @@ bundle exec rake release  # Release (via bundler/gem_tasks)
 
 ```
 lib/
-├── firebird_adapter.rb                           # Entry point; registers adapter for Rails >= 7.2
+├── firebird_adapter.rb                           # Entry point; registers adapter via ActiveRecord::ConnectionAdapters.register
 ├── active_record/
-│   ├── extensions.rb                             # Monkey patches: Calculations#count, bind param ordering
+│   ├── extensions.rb                             # Monkey patch: Calculations#count forces column_name default to 1
 │   ├── internal_metadata_extensions.rb           # Workaround: uses "value_" instead of "value" (reserved word)
 │   └── connection_adapters/
 │       ├── firebird_adapter.rb                   # Main adapter class (inherits AbstractAdapter)
@@ -85,7 +96,7 @@ spec/
 
 ### Adapter Registration
 
-For Rails >= 7.2, the adapter is registered explicitly via `ActiveRecord::ConnectionAdapters.register`. For earlier Rails 7.x versions it is loaded through the conventional require path.
+The adapter is registered explicitly via `ActiveRecord::ConnectionAdapters.register` when ActiveRecord loads. This is the standard mechanism for Rails >= 7.2 and continues to work in Rails 8.
 
 ### Connection Factory (`firebird_connection`)
 
@@ -121,7 +132,6 @@ Firebird does not have auto-increment columns; it uses generators/sequences. The
 
 The codebase uses direct monkey-patching on ActiveRecord classes (`module_eval`, `class << self`) rather than Rails hooks or concerns. Key patches:
 - `ActiveRecord::Calculations#count` — forces `column_name` default to `1`.
-- `ActiveRecord::ConnectionAdapters::AbstractAdapter#combine_bind_parameters` — changes bind order to put `limit` before `offset` (legacy Rails < 5.2 only).
 - `ActiveRecord::InternalMetadata` — redefines column name and table creation logic.
 
 ## Development Conventions
@@ -158,7 +168,7 @@ The shared model `SisTest` maps to the pre-existing `sis_test` table in `db/exam
 ### Running with Docker Compose
 
 The provided `docker-compose.yml` defines two services:
-- `app`: Ruby 2.7.7 development container (volume-mounted project + gem cache)
+- `app`: Ruby 3.2 development container (volume-mounted project + gem cache)
 - `db`: Firebird 2.5.8 SuperServer with `ISC_PASSWORD=masterkey`
 
 Example workflow:
@@ -170,7 +180,7 @@ docker-compose run --rm app bundle exec rspec
 ## Security Considerations
 
 - **Hardcoded credentials**: Test configuration and Docker Compose use the default Firebird `SYSDBA` / `masterkey` credentials. These must never be used in production.
-- **SQL injection in schema queries**: Some schema introspection methods (e.g., `primary_keys`, `indexes`, `foreign_keys`) interpolate table names directly into SQL strings using string concatenation. These are internal schema queries and operate on table names already validated by ActiveRecord, but contributors should avoid expanding untrusted input into these queries.
+- **SQL injection in schema queries**: Some schema introspection methods (e.g. `primary_keys`, `indexes`, `foreign_keys`) interpolate table names directly into SQL strings using string concatenation. These are internal schema queries and operate on table names already validated by ActiveRecord, but contributors should avoid expanding untrusted input into these queries.
 - **Exception messages**: Exception text from the Firebird driver is re-encoded to UTF-8. Be cautious that error messages may contain raw database values; do not expose them to end users without sanitization.
 
 ## Deployment / Distribution
@@ -178,7 +188,7 @@ docker-compose run --rm app bundle exec rspec
 This is a standard Ruby gem distributed via RubyGems (or a private gem server). Consumers add it to their `Gemfile`:
 
 ```ruby
-gem 'firebird_adapter', '7.0'
+gem 'firebird_adapter', '~> 8.0'
 ```
 
 And configure `database.yml`:

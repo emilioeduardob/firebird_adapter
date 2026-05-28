@@ -49,11 +49,13 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
   def reconnect!
     disconnect!
     @connection = ::Fb::Database.connect(@config)
+    @raw_connection = @connection if instance_variable_defined?(:@raw_connection)
   end
 
   def disconnect!
     super
     @connection.close rescue nil
+    @raw_connection = nil if instance_variable_defined?(:@raw_connection)
   end
 
   def reset!
