@@ -47,6 +47,10 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
     false
   end
 
+  # Rails 8.1 calls +reconnect!+ with the +restore_transactions+ keyword.
+  # We accept it (defaulting to false) so the adapter stays compatible with
+  # both Rails 8.0 and 8.1. A freshly opened connection has no live
+  # transaction to restore, so the keyword is intentionally a no-op here.
   def reconnect!(restore_transactions: false)
     disconnect!
     @connection = ::Fb::Database.connect(
@@ -91,9 +95,12 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
     @connection&.encoding || @config[:encoding] || self.class::DEFAULT_ENCODING
   end
 
-  def log(sql, name = "SQL", binds = [], type_casted_binds = [], statement_name = nil) # :doc:
+  # The +log+ signature gained keyword arguments over the Rails 8.x series
+  # (+async:+ in 8.0, +allow_retry:+ in 8.1). We capture them with +**kwargs+
+  # and forward them verbatim so the override works on every 8.x release.
+  def log(sql, name = "SQL", binds = [], type_casted_binds = [], **kwargs, &block) # :doc:
     sql = sql.encode('UTF-8', encoding) if sql.encoding.to_s == encoding
-    super
+    super(sql, name, binds, type_casted_binds, **kwargs, &block)
   end
 
   def supports_foreign_keys?

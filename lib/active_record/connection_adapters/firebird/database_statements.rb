@@ -16,7 +16,10 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
     }
   end
 
-  def execute(sql, name = nil)
+  # Rails 8.1 calls +execute+ with the +allow_retry+ keyword. Firebird does not
+  # implement automatic statement retry, so we simply accept the keyword to stay
+  # signature-compatible across Rails 8.0 and 8.1.
+  def execute(sql, name = nil, allow_retry: false)
     sql = sql.encode(encoding, 'UTF-8')
 
     log(sql, name) do

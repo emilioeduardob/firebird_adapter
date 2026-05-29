@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.version       = '8.1.0'
   spec.authors       = ['Fábio Rodrigues']
   spec.email         = ['fabio.info@gmail.com']
-  spec.summary       = 'ActiveRecord Firebird Adapter for Rails 8.'
+  spec.summary       = 'ActiveRecord Firebird Adapter for Rails 8 (8.0 and 8.1).'
   spec.homepage      = 'https://github.com/FabioMR/firebird_adapter'
   spec.license       = 'MIT'
 
