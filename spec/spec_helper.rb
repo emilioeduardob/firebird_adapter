@@ -6,11 +6,11 @@ require 'active_record'
 
 ActiveRecord::Base.establish_connection(
   adapter:  'firebird',
-  username: 'SYSDBA',
-  password: 'masterkey',
-  host: 'db',
-  database: '/firebird/data/example.fdb',
-  encoding: 'UTF-8',
+  username: ENV.fetch('FIREBIRD_USERNAME', 'SYSDBA'),
+  password: ENV.fetch('FIREBIRD_PASSWORD', 'masterkey'),
+  host:     ENV.fetch('FIREBIRD_HOST', 'db'),
+  database: ENV.fetch('FIREBIRD_DATABASE', '/firebird/data/example.fdb'),
+  encoding: ENV.fetch('FIREBIRD_ENCODING', 'UTF-8'),
 )
 
 class SisTest < ActiveRecord::Base
