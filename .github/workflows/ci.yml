@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  rspec:
+    name: Rails ${{ matrix.rails }} (Ruby ${{ matrix.ruby }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.2"]
+        rails: ["8.0", "8.1"]
+
+    services:
+      firebird:
+        image: jacobalberty/firebird:2.5.8-ss
+        env:
+          ISC_PASSWORD: masterkey
+          TZ: UTC
+        ports:
+          - 3050:3050
+
+    env:
+      RAILS_VERSION: ${{ matrix.rails }}
+      # spec/spec_helper.rb reads these (defaults target the docker-compose setup).
+      FIREBIRD_HOST: localhost
+      FIREBIRD_DATABASE: /firebird/data/example.fdb
+      FIREBIRD_USERNAME: SYSDBA
+      FIREBIRD_PASSWORD: masterkey
+      FIREBIRD_ENCODING: UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Firebird client libraries (for the native `fb` gem)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y firebird-dev libfbclient2
+
+      - name: Load the fixture database into the Firebird service
+        run: |
+          cid=$(docker ps --filter "ancestor=jacobalberty/firebird:2.5.8-ss" --format '{{.ID}}' | head -n1)
+          if [ -z "$cid" ]; then
+            echo "Firebird service container not found" >&2
+            exit 1
+          fi
+          docker cp db/example.fdb "$cid":/firebird/data/example.fdb
+          docker exec "$cid" chown firebird:firebird /firebird/data/example.fdb
+
+      - name: Wait for Firebird to accept connections
+        run: |
+          for i in $(seq 1 30); do
+            if bash -c 'echo > /dev/tcp/localhost/3050' 2>/dev/null; then
+              echo "Firebird is up"
+              exit 0
+            fi
+            echo "Waiting for Firebird... ($i)"
+            sleep 2
+          done
+          echo "Firebird did not become ready in time" >&2
+          exit 1
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+
+      - name: Install gems
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Run RSpec
+        run: bundle exec rspec

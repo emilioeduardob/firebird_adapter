@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is `firebird_adapter`, a Ruby gem that provides an ActiveRecord connection adapter for Firebird databases. It targets **Rails 8.x** (version 8.0.0 of the gem) and is built on top of the low-level `fb` gem.
+This is `firebird_adapter`, a Ruby gem that provides an ActiveRecord connection adapter for Firebird databases. It targets **Rails 8.x** (version 8.1.0 of the gem, compatible with both Rails 8.0 and Rails 8.1) and is built on top of the low-level `fb` gem.
 
 - **Repository**: https://github.com/FabioMR/firebird_adapter
 - **License**: MIT
@@ -29,10 +29,16 @@ This project uses **release branches** to support multiple Rails versions, follo
 
 | Gem version | Rails version | Branch |
 |-------------|---------------|--------|
-| 8.x         | 8.x           | `release80` / `master` |
+| 8.1.x       | 8.1.x         | `release80` / `master` |
+| 8.0.x       | 8.0.x         | `release80` / `master` |
 | 7.x         | 7.x           | `release70` |
 
-Tags (e.g. `v8.0.0`, `v7.0.1`) are cut from the relevant release branch.
+The `8.x` gem line depends on `activerecord >= 8.0, < 8.2` and supports both
+Rails 8.0 and Rails 8.1. The adapter absorbs the keyword-argument additions
+Rails 8.1 made to `log` (`allow_retry:`), `reconnect!` (`restore_transactions:`)
+and `execute` (`allow_retry:`) so a single gem line covers the whole 8.x series.
+
+Tags (e.g. `v8.1.0`, `v8.0.0`, `v7.0.1`) are cut from the relevant release branch.
 
 ## Build and Test Commands
 

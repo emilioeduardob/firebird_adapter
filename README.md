@@ -6,10 +6,14 @@ ActiveRecord Firebird Adapter for Rails 8 and Rails 7.
 
 | Rails version | Adapter version | Branch      |
 |---------------|-----------------|-------------|
-| 8.x           | ~> 8.0          | `release80` |
+| 8.1.x         | ~> 8.1          | `release80` |
+| 8.0.x         | ~> 8.0          | `release80` |
 | 7.x           | ~> 7.0          | `release70` |
 | 6.x           | ~> 6.0          | —           |
 | 5.x           | ~> 5.0          | —           |
+
+The `8.x` gem line tracks the `8.x` Rails line and is tested against both
+Rails 8.0 and Rails 8.1 (`activerecord >= 8.0, < 8.2`).
 
 We follow the same branching strategy as [oracle-enhanced](https://github.com/rsim/oracle-enhanced): each major/minor Rails version is supported on a dedicated release branch. Tags are cut from those branches for individual gem releases.
 
