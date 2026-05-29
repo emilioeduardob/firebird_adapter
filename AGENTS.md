@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is `firebird_adapter`, a Ruby gem that provides an ActiveRecord connection adapter for Firebird databases. It targets **Rails 8.x** (version 8.0.0 of the gem) and is built on top of the low-level `fb` gem.
+This is `firebird_adapter`, a Ruby gem that provides an ActiveRecord connection adapter for Firebird databases. It targets **Rails 8.x** (version 8.1.0 of the gem) and is built on top of the low-level `fb` gem.
 
 - **Repository**: https://github.com/FabioMR/firebird_adapter
 - **License**: MIT
@@ -29,7 +29,7 @@ This project uses **release branches** to support multiple Rails versions, follo
 
 | Gem version | Rails version | Branch |
 |-------------|---------------|--------|
-| 8.x         | 8.x           | `release80` / `master` |
+| 8.x         | 8.0 – 8.1     | `release80` / `master` |
 | 7.x         | 7.x           | `release70` |
 
 Tags (e.g. `v8.0.0`, `v7.0.1`) are cut from the relevant release branch.
@@ -188,7 +188,7 @@ docker-compose run --rm app bundle exec rspec
 This is a standard Ruby gem distributed via RubyGems (or a private gem server). Consumers add it to their `Gemfile`:
 
 ```ruby
-gem 'firebird_adapter', '~> 8.0'
+gem 'firebird_adapter', '~> 8.1'
 ```
 
 And configure `database.yml`:

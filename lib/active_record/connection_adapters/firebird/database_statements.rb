@@ -63,7 +63,7 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
     end
   end
 
-  def internal_exec_query(sql, name = "SQL", binds = [], prepare: false, async: false, allow_retry: false) # :nodoc:
+  def internal_exec_query(sql, name = "SQL", binds = [], prepare: false, async: false, allow_retry: false, materialize_transactions: true, **_) # :nodoc:
     exec_query(sql, name, binds, prepare: prepare)
   end
 

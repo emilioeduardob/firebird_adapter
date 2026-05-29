@@ -11,8 +11,6 @@ module ActiveRecord::ConnectionHandling
       config[:database] = File.expand_path(config[:database], Rails.root)
     end
 
-    connection = ::Fb::Database.new(config).connect
-
-    ActiveRecord::ConnectionAdapters::FirebirdAdapter.new(connection, logger, config)
+    ActiveRecord::ConnectionAdapters::FirebirdAdapter.new(config)
   end
 end

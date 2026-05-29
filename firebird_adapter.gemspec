@@ -3,7 +3,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = 'firebird_adapter'
-  spec.version       = '8.0.0'
+  spec.version       = '8.1.0'
   spec.authors       = ['Fábio Rodrigues']
   spec.email         = ['fabio.info@gmail.com']
   spec.summary       = 'ActiveRecord Firebird Adapter for Rails 8.'
@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.required_ruby_version = '>= 3.2'
-  spec.add_dependency 'activerecord', '~> 8.0'
+  spec.add_dependency 'activerecord', '>= 8.0', '< 8.2'
   spec.add_dependency 'fb' #, '~> 0.9.3'
 
   spec.add_development_dependency 'bundler', '>= 2.4'

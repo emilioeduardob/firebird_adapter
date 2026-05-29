@@ -18,7 +18,7 @@ We follow the same branching strategy as [oracle-enhanced](https://github.com/rs
 Add to your Gemfile:
 
 ```ruby
-gem 'firebird_adapter', '~> 8.0'
+gem 'firebird_adapter', '~> 8.1'
 ```
 
 For Rails 7:

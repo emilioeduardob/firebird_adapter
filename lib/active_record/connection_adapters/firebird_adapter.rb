@@ -18,15 +18,16 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
   include ActiveRecord::ConnectionAdapters::Firebird::SchemaStatements
   include ActiveRecord::ConnectionAdapters::Firebird::Quoting
 
-  def initialize(connection)
-    @connection = ::Fb::Database.connect(
-      database: database_path(connection),
-      username: connection[:username],
-      password: connection[:password],
-      charset: connection[:encoding],
-      downcase_names: true
-    )
-    super(connection)
+  def initialize(config_or_connection = nil)
+    if config_or_connection.is_a?(Hash)
+      # Rails 8+ preferred path: config hash only, connection is deferred
+      # to reconnect! via verify!.
+      super(config_or_connection)
+    else
+      # Legacy path: accept a pre-built Fb connection object.
+      @connection = config_or_connection
+      super(config_or_connection)
+    end
   end
 
   def arel_visitor
@@ -38,7 +39,7 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
   end
 
   def active?
-    return false unless @connection.open?
+    return false unless @connection&.open?
 
     @connection.query("SELECT 1 FROM RDB$DATABASE")
     true
@@ -46,16 +47,22 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
     false
   end
 
-  def reconnect!
+  def reconnect!(restore_transactions: false)
     disconnect!
-    @connection = ::Fb::Database.connect(@config)
-    @raw_connection = @connection if instance_variable_defined?(:@raw_connection)
+    @connection = ::Fb::Database.connect(
+      database: @config[:database],
+      username: @config[:username],
+      password: @config[:password],
+      charset: @config[:encoding] || self.class::DEFAULT_ENCODING,
+      downcase_names: true
+    )
+    @raw_connection = @connection
   end
 
   def disconnect!
     super
-    @connection.close rescue nil
-    @raw_connection = nil if instance_variable_defined?(:@raw_connection)
+    @connection&.close
+    @raw_connection = nil
   end
 
   def reset!
@@ -81,7 +88,7 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
   end
 
   def encoding
-    @connection.encoding
+    @connection&.encoding || @config[:encoding] || self.class::DEFAULT_ENCODING
   end
 
   def log(sql, name = "SQL", binds = [], type_casted_binds = [], statement_name = nil) # :doc:
@@ -105,14 +112,6 @@ protected
       ActiveRecord::ActiveRecordError.new(message)
     else
       super
-    end
-  end
-
-  private
-
-  def database_path(config)
-    if config[:host]
-      "#{config[:host]}:#{config[:database]}"
     end
   end
 

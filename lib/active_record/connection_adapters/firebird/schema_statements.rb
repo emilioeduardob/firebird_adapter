@@ -121,7 +121,17 @@ private
 
   def new_column_from_field(table_name, field, columns)
     type_metadata = fetch_type_metadata(field["sql_type"])
-    ActiveRecord::ConnectionAdapters::Column.new(field["name"], field["default"], type_metadata, field["nullable"], table_name)
+
+    if ActiveRecord::VERSION::MAJOR > 8 || (ActiveRecord::VERSION::MAJOR == 8 && ActiveRecord::VERSION::MINOR >= 1)
+      cast_type = lookup_cast_type(field["sql_type"])
+      ActiveRecord::ConnectionAdapters::Column.new(
+        field["name"], cast_type, field["default"], type_metadata, field["nullable"]
+      )
+    else
+      ActiveRecord::ConnectionAdapters::Column.new(
+        field["name"], field["default"], type_metadata, field["nullable"]
+      )
+    end
   end
 
 end
