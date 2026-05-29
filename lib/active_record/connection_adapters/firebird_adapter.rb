@@ -98,9 +98,9 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
     end
   end
 
-  def log(sql, name = "SQL", binds = [], type_casted_binds = [], async: false, allow_retry: false, &block) # :doc:
+  def log(sql, name = "SQL", binds = [], type_casted_binds = [], **kwargs, &block) # :doc:
     sql = sql.encode('UTF-8', encoding) if sql.encoding.to_s == encoding
-    super
+    super(sql, name, binds, type_casted_binds, **kwargs, &block)
   end
 
   def supports_foreign_keys?
