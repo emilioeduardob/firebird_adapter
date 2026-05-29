@@ -13,7 +13,7 @@ describe 'populate' do
 
     expect do
       record = SisTest.create!(field_char: '012345678912345X')
-    end.to raise_error(ActiveRecord::StatementInvalid, /RangeError/) 
+    end.to raise_error(ActiveRecord::StatementInvalid, /string right truncation/) 
   end
 
   it '.update_all' do
@@ -35,7 +35,7 @@ describe 'populate' do
     
     expect do
       record.update!(field_char: '012345678912345X')
-    end.to raise_error(ActiveRecord::StatementInvalid, /RangeError/) 
+    end.to raise_error(ActiveRecord::StatementInvalid, /string right truncation/) 
   end
 
   it '#destroy' do

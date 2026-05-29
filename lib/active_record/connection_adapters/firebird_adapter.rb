@@ -20,13 +20,24 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
 
   def initialize(config_or_connection = nil)
     if config_or_connection.is_a?(Hash)
-      # Rails 8+ preferred path: config hash only, connection is deferred
-      # to reconnect! via verify!.
-      super(config_or_connection)
+      config = config_or_connection.symbolize_keys.dup
+      config.reverse_merge!(downcase_names: true, port: 3050, encoding: self.class::DEFAULT_ENCODING)
+
+      # Transform the database path for Firebird connection string format,
+      # but only if it hasn't already been transformed (e.g. by the legacy
+      # firebird_connection factory on Rails 8.0).
+      if config[:host] && !config[:database].to_s.start_with?("#{config[:host]}/")
+        config[:database] = "#{config[:host]}/#{config[:port]}:#{config[:database]}"
+      elsif !config[:host]
+        config[:database] = File.expand_path(config[:database], Rails.root)
+      end
+
+      super(config)
     else
       # Legacy path: accept a pre-built Fb connection object.
-      @connection = config_or_connection
       super(config_or_connection)
+      @connection = config_or_connection
+      @raw_connection = config_or_connection
     end
   end
 
@@ -47,25 +58,9 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
     false
   end
 
-  # Rails 8.1 calls +reconnect!+ with the +restore_transactions+ keyword.
-  # We accept it (defaulting to false) so the adapter stays compatible with
-  # both Rails 8.0 and 8.1. A freshly opened connection has no live
-  # transaction to restore, so the keyword is intentionally a no-op here.
-  def reconnect!(restore_transactions: false)
-    disconnect!
-    @connection = ::Fb::Database.connect(
-      database: @config[:database],
-      username: @config[:username],
-      password: @config[:password],
-      charset: @config[:encoding] || self.class::DEFAULT_ENCODING,
-      downcase_names: true
-    )
-    @raw_connection = @connection
-  end
-
   def disconnect!
     super
-    @connection&.close
+    @connection&.close rescue nil
     @raw_connection = nil
   end
 
@@ -92,34 +87,67 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
   end
 
   def encoding
-    @connection&.encoding || @config[:encoding] || self.class::DEFAULT_ENCODING
+    @config[:encoding] || self.class::DEFAULT_ENCODING
   end
 
-  # The +log+ signature gained keyword arguments over the Rails 8.x series
-  # (+async:+ in 8.0, +allow_retry:+ in 8.1). We capture them with +**kwargs+
-  # and forward them verbatim so the override works on every 8.x release.
-  def log(sql, name = "SQL", binds = [], type_casted_binds = [], **kwargs, &block) # :doc:
+  def lookup_cast_type(sql_type)
+    if sql_type.to_s.downcase.include?('blob sub_type text')
+      ActiveRecord::Type::Text.new
+    else
+      super
+    end
+  end
+
+  def log(sql, name = "SQL", binds = [], type_casted_binds = [], async: false, allow_retry: false, &block) # :doc:
     sql = sql.encode('UTF-8', encoding) if sql.encoding.to_s == encoding
-    super(sql, name, binds, type_casted_binds, **kwargs, &block)
+    super
   end
 
   def supports_foreign_keys?
     true
   end
 
+  READ_QUERY = /^\s*(SELECT|WITH\s.+\sSELECT)\b/i
+
+  def write_query?(sql)
+    !READ_QUERY.match?(sql)
+  rescue ArgumentError
+    !READ_QUERY.match?(sql.b)
+  end
+
 protected
 
-  def translate_exception(e, message)
+  def translate_exception(e, message:, sql:, binds:)
     case e.message
     when /violation of FOREIGN KEY constraint/
-      ActiveRecord::InvalidForeignKey.new(message)
+      ActiveRecord::InvalidForeignKey.new(message, sql: sql, binds: binds, connection_pool: @pool)
     when /violation of PRIMARY or UNIQUE KEY constraint/, /attempt to store duplicate value/
-      ActiveRecord::RecordNotUnique.new(message)
+      ActiveRecord::RecordNotUnique.new(message, sql: sql, binds: binds, connection_pool: @pool)
     when /This operation is not defined for system tables/
       ActiveRecord::ActiveRecordError.new(message)
     else
       super
     end
+  end
+
+private
+
+  def connect
+    @connection = ::Fb::Database.connect(
+      database: @config[:database],
+      username: @config[:username],
+      password: @config[:password],
+      charset: @config[:encoding] || self.class::DEFAULT_ENCODING,
+      downcase_names: true
+    )
+    @raw_connection = @connection
+  end
+
+  def reconnect
+    @connection&.close rescue nil
+    @connection = nil
+    @raw_connection = nil
+    connect
   end
 
 end

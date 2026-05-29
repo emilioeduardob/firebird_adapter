@@ -11,6 +11,8 @@ module ActiveRecord::ConnectionHandling
       config[:database] = File.expand_path(config[:database], Rails.root)
     end
 
+
+
     ActiveRecord::ConnectionAdapters::FirebirdAdapter.new(config)
   end
 end
