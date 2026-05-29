@@ -53,6 +53,7 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
     return false unless @connection&.open?
 
     @connection.query("SELECT 1 FROM RDB$DATABASE")
+    verified! if respond_to?(:verified!, true)
     true
   rescue
     false
@@ -107,7 +108,9 @@ class ActiveRecord::ConnectionAdapters::FirebirdAdapter < ActiveRecord::Connecti
     true
   end
 
-  READ_QUERY = /^\s*(SELECT|WITH\s.+\sSELECT)\b/i
+  # +/m+ lets the WITH ... SELECT branch span multiple lines so multi-line
+  # CTEs are correctly classified as reads rather than writes.
+  READ_QUERY = /^\s*(SELECT|WITH\s.+\sSELECT)\b/im
 
   def write_query?(sql)
     !READ_QUERY.match?(sql)
