@@ -16,6 +16,23 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
     }
   end
 
+  # Rails 8.1's base +execute+ returns the raw result of +perform_query+
+  # without running it through +cast_result+. For Firebird that raw result is
+  # an unconsumed +Fb::Cursor+ when the statement returns rows (e.g. a SELECT),
+  # which would leak the cursor and break callers that expect row data. Mirror
+  # the historical behavior by consuming and closing the cursor, returning the
+  # fetched rows. DML/DDL (which return a row count or nil) pass through.
+  def execute(sql, name = nil, allow_retry: false)
+    result = super
+    return result unless result.is_a?(Fb::Cursor)
+
+    rows = result.fetchall.map do |row|
+      row.map { |col| col.is_a?(String) ? col.encode('UTF-8', encoding, invalid: :replace, undef: :replace) : col }
+    end
+    result.close rescue nil
+    rows
+  end
+
   def begin_db_transaction
     verify!
     log("begin transaction", nil) { @connection.transaction('READ COMMITTED') }
@@ -105,15 +122,19 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
     end
 
     result
-  rescue Exception => e
+  rescue StandardError => e
     if result.is_a?(Fb::Cursor)
       result.close rescue nil
     end
+    # Firebird raises "string right truncation" when a bind value is wider than
+    # the column it is compared against. For a SELECT no row could ever match
+    # such a value, so returning an empty result is semantically correct (and
+    # avoids crashing on otherwise valid lookups). Write statements still raise.
     if e.message.include?('string right truncation') && sql.to_s.strip.downcase.start_with?('select')
       return ActiveRecord::Result.new([], [])
     end
     new_message = e.message.encode('UTF-8', encoding) rescue e.message
-    raise e.class, new_message
+    raise e.class, new_message, e.backtrace
   end
 
   def cast_result(raw_result)
