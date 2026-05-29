@@ -20,6 +20,7 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
   # implement automatic statement retry, so we simply accept the keyword to stay
   # signature-compatible across Rails 8.0 and 8.1.
   def execute(sql, name = nil, allow_retry: false)
+    verify!
     sql = sql.encode(encoding, 'UTF-8')
 
     log(sql, name) do
@@ -30,6 +31,7 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
   end
 
   def exec_query(sql, name = 'SQL', binds = [], prepare: false)
+    verify!
     sql = sql.encode(encoding, 'UTF-8')
 
     type_casted_binds = type_casted_binds(binds).map do |value|
@@ -71,14 +73,17 @@ module ActiveRecord::ConnectionAdapters::Firebird::DatabaseStatements
   end
 
   def begin_db_transaction
+    verify!
     log("begin transaction", nil) { @connection.transaction('READ COMMITTED') }
   end
 
   def commit_db_transaction
+    verify!
     log("commit transaction", nil) { @connection.commit }
   end
 
   def exec_rollback_db_transaction
+    verify!
     log("rollback transaction", nil) { @connection.rollback }
   end
 
