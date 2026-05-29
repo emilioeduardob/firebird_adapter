@@ -12,10 +12,9 @@ describe 'migration' do
 
   def drop_tables
     ActiveRecord::Migration.class_eval do
-      drop_table :record1s
-      drop_table :record2s
-      drop_table :record1s_record2s
-    rescue
+      drop_table :record1s rescue nil
+      drop_table :record2s rescue nil
+      drop_table :record1s_record2s rescue nil
     end
   end
 

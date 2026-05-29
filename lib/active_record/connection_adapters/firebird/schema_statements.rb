@@ -3,10 +3,12 @@ require 'active_support/core_ext/string/strip'
 module ActiveRecord::ConnectionAdapters::Firebird::SchemaStatements
 
   def tables(_name = nil)
+    verify!
     @connection.table_names
   end
 
   def views
+    verify!
     @connection.view_names
   end
 
@@ -116,12 +118,38 @@ private
   end
 
   def column_definitions(table_name)
+    verify!
     @connection.columns(table_name)
   end
 
   def new_column_from_field(table_name, field, columns)
-    type_metadata = fetch_type_metadata(field["sql_type"])
-    ActiveRecord::ConnectionAdapters::Column.new(field["name"], field["default"], type_metadata, field["nullable"], table_name)
+    sql_type = field["sql_type"]
+
+    # Firebird BLOB sub_type 1 is text, sub_type 0 is binary.
+    type_metadata = if sql_type.to_s.upcase == "BLOB" && field["sql_subtype"] == 1
+      ActiveRecord::ConnectionAdapters::SqlTypeMetadata.new(
+        sql_type: sql_type,
+        type: ActiveRecord::Type::Text.new,
+        limit: field["length"]
+      )
+    else
+      fetch_type_metadata(sql_type)
+    end
+
+    if ActiveRecord::VERSION::MAJOR > 8 || (ActiveRecord::VERSION::MAJOR == 8 && ActiveRecord::VERSION::MINOR >= 1)
+      cast_type = if sql_type.to_s.upcase == "BLOB" && field["sql_subtype"] == 1
+        ActiveRecord::Type::Text.new
+      else
+        lookup_cast_type(sql_type)
+      end
+      ActiveRecord::ConnectionAdapters::Column.new(
+        field["name"], cast_type, field["default"], type_metadata, field["nullable"]
+      )
+    else
+      ActiveRecord::ConnectionAdapters::Column.new(
+        field["name"], field["default"], type_metadata, field["nullable"]
+      )
+    end
   end
 
 end

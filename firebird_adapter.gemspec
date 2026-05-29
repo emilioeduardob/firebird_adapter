@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.version       = '8.1.0'
   spec.authors       = ['Fábio Rodrigues']
   spec.email         = ['fabio.info@gmail.com']
-  spec.summary       = 'ActiveRecord Firebird Adapter for Rails 8 (8.0 and 8.1).'
+  spec.summary       = 'ActiveRecord Firebird Adapter for Rails 8.1.'
   spec.homepage      = 'https://github.com/FabioMR/firebird_adapter'
   spec.license       = 'MIT'
 
@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.required_ruby_version = '>= 3.2'
-  spec.add_dependency 'activerecord', '>= 8.0', '< 8.2'
+  spec.add_dependency 'activerecord', '>= 8.1', '< 8.2'
   spec.add_dependency 'fb' #, '~> 0.9.3'
 
   spec.add_development_dependency 'bundler', '>= 2.4'

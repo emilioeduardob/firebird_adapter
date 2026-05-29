@@ -29,8 +29,7 @@ This project uses **release branches** to support multiple Rails versions, follo
 
 | Gem version | Rails version | Branch |
 |-------------|---------------|--------|
-| 8.1.x       | 8.1.x         | `release80` / `master` |
-| 8.0.x       | 8.0.x         | `release80` / `master` |
+| 8.x         | 8.0 – 8.1     | `release80` / `master` |
 | 7.x         | 7.x           | `release70` |
 
 The `8.x` gem line depends on `activerecord >= 8.0, < 8.2` and supports both
@@ -194,7 +193,7 @@ docker-compose run --rm app bundle exec rspec
 This is a standard Ruby gem distributed via RubyGems (or a private gem server). Consumers add it to their `Gemfile`:
 
 ```ruby
-gem 'firebird_adapter', '~> 8.0'
+gem 'firebird_adapter', '~> 8.1'
 ```
 
 And configure `database.yml`:
