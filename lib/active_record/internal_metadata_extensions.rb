@@ -37,7 +37,7 @@ class ActiveRecord::InternalMetadata
       if @pool.with_connection { |c| c.adapter_name.downcase.to_sym == :firebird }
         "value_"
       else
-        super
+        "value"
       end
     end
 
